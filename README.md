@@ -1,26 +1,25 @@
 Dockerized ISC DHCP server based on CentOS 7 
 
 # Introduction
-On CentOS the DHCP server (`dhcpd`) is a `systemd` service. In this image, the server process is executed 
-directly on container launch (Dockerfile `CMD`), without `systemd`. The image uses [dumb-init](#dumb-init) 
-to address the problems that appear because CentOS (any init-system based Linux, for the matter) always 
-expects and supposes that the 1st process is the init-system.
+In this Docker image, the DHCP server (`dhcpd`) - a `systemd` service on CentOS - is executed directly
+on container launch (Dockerfile `CMD`), without `systemd`. The image uses [dumb-init](#dumb-init) 
+to address the problems that appear because CentOS runs without `systemd`. 
 
 # DHCP server
 The command used to launch the DHCP server is
 
 `/usr/sbin/dhcpd -f -d -cf /etc/dhcp/dhcpd.conf -user dhcpd -group dhcpd --no-pid`
 
-which is what CentOS' default systemd unit file uses, except the `-d` flag added to reconfigure logging to use
-stdout/stderr instead of SYSLOG. 
+which is what CentOS' default `systemd` unit file uses, except the `-d` flag added to reconfigure logging to 
+use stdout/stderr instead of SYSLOG. 
 
 The DHCP server needs access to the network interface informations to be able to interpret its configuration - 
 in fact, the DHCP configuration is network interface agnostic and it's up to the server to match the 
 configurations with the actual network situation. If the DHCP service is meant to serve networks of the Docker 
 host, it has to be given access to the host's network interfaces with the Docker run flag `--net host`
 
-The `-cf` flag tells the server to expect its configuration file to be located at `/etc/dhcp/dhcpd.conf`. The
-file could be added at build time using a 
+The `-cf` flag tells the DHCP server to expect its configuration file to be located at `/etc/dhcp/dhcpd.conf`. 
+This file could be added at build time using a 
   
 `ADD <dhcpd_conf_filepath_on_host> /etc/dhcp/dhcpd.conf` 
 
@@ -47,9 +46,9 @@ Related documentation:
 Since CentOS uses `systemd` and supposes that the process with ID 1 is always `systemd`, running a single process 
 inside a CentOS container comes with a range of quirks explained in the 
 [dumb-init documentation](https://github.com/Yelp/dumb-init). One important aspect is that affected containers 
-without `dumb-init` ignore process signals like `SIGTERM`. The Docker client "solves" this by killing the 
-container process if the stop command times out but other pieces of software tend to get confused if processes 
-ignore common signals. 
+without `dumb-init` tend to misbehave with respect to process signals, especially `SIGTERM` used for graceful 
+process shutown. The Docker client "solves" this by killing the container process if the stop command times out 
+but other pieces of software tend to get confused if processes misbehave.
 
 Hence, while it's absolutely possible to run the DHCP server directly using the command given above, it's just 
 good practice to add `dumb-init` for proper signal handling. The Dockerfile contains the instructions to install 
