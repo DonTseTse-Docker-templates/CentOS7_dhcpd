@@ -14,14 +14,10 @@ The command used to launch the DHCP server is
 which is what CentOS' default systemd unit file uses, except the `-d` flag added to reconfigure logging to use
 stdout/stderr instead of SYSLOG. 
 
-DHCP server configurations never define network-interface related settings, only network configurations => the 
-server needs access to the network interface information to match the configurations with the actual network 
-situation. 
-Unless configured otherwise, the Docker engine provides containers a dedicated LAN => if the DHCP service is 
-meant to serve networks of the Docker host, it has to be given access to the host's interfaces with the Docker run 
-flag 
-
-`--net host`
+The DHCP server needs access to the network interface informations to be able to interpret its configuration - 
+in fact, the DHCP configuration is network interface agnostic and it's up to the server to match the 
+configurations with the actual network situation. If the DHCP service is meant to serve networks of the Docker 
+host, it has to be given access to the host's network interfaces with the Docker run flag `--net host`
 
 The launch command tells the server to expect its configuration file to be located at `/etc/dhcp/dhcpd.conf`. 
 There are several ways to get the file there:
@@ -32,9 +28,10 @@ There are several ways to get the file there:
   instruction in the Dockerfile, or
 - it is mounted from the host at runtime using the Docker run flag 
   
-  `-v <dhcpd_conf_filepath_on_host>:/etc/dhcp/dhcpd.conf` 
+  `-v <dhcpd_conf_filepath_on_host>:/etc/dhcp/dhcpd.conf:ro` 
 
-  where `dhcpd_conf_filepath_on_host` is the absolute filepath of the configuration file on the Docker host  
+  where `dhcpd_conf_filepath_on_host` is the absolute filepath of the configuration file on the Docker host. The
+  `:ro` at the end mounts it read-only.   
 
 Relevant links:
 - [DHCP manual](https://linux.die.net/man/8/dhcpd)
@@ -74,7 +71,8 @@ In the folder where the Dockerfile is, execute:
 registry
 
 ## Execution
-To run the image using the docker client, execute:
+Supposing that you want to run the container on the host's network interfaces and with a DHCP configuration 
+mounted from the host, execute:
 
 `docker run --net host -v <dhcpd_conf_filepath>:/etc/dhcp/dhcpd.conf --name <container_name> -d <image_name>`
 
@@ -84,8 +82,8 @@ where
 
 The role of the `--net` and `-v` flags is explained in the [DHCP server section](#dhcp-server) 
 
-To run the image as a `systemd` unit and supposing that `systemd-docker` was copied to `/usr/bin`, a service 
-unit file might look like:
+To run that same container as a `systemd` unit and supposing that `systemd-docker` was copied to `/usr/bin`, 
+a service unit file might look like:
 ```ini
 [Unit]
 Description=DHCP service
