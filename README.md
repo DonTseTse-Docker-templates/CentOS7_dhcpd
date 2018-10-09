@@ -48,11 +48,11 @@ inside a CentOS container comes with a range of quirks explained in the
 [dumb-init documentation](https://github.com/Yelp/dumb-init). One important aspect is that affected containers 
 without `dumb-init` tend to misbehave with respect to process signals, especially `SIGTERM` used for graceful 
 process shutown. The Docker client "solves" this by killing the container process if the stop command times out 
-but other pieces of software tend to get confused if processes misbehave.
+but other pieces of software tend to get confused if processes don't handle signals properly.
 
-Hence, while it's absolutely possible to run the DHCP server directly using the command given above, it's just 
-good practice to add `dumb-init` for proper signal handling. The Dockerfile contains the instructions to install 
-the latest binary from GitHub and the Dockerfile `CMD` is prepended with `dumb-init` to become 
+Hence, while it's absolutely possible to run the DHCP server alone using the command given above, this image 
+includes `dumb-init` for proper signal handling. The Dockerfile contains the instructions to install the latest 
+binary from GitHub and the `CMD` is prepended with `dumb-init` to become 
 
 `dumb-init /usr/sbin/dhcpd ...`
 
@@ -107,3 +107,19 @@ WantedBy=multi-user.target
 ```
 When `systemd-docker` is used, a explicit container name (`--name <container_name>`) as well as automatic
 removal (`--rm`) is compulsory and the `-d` flag is not needed. 
+
+# Acknowledgements
+
+This image uses the following software components:
+
+- CentOS Docker images from https://hub.docker.com/_/centos/
+- ISC DHCP server from https://www.isc.org/downloads/dhcp/
+- Dumb-init from https://github.com/Yelp/dumb-init
+
+# Copyright & License
+
+This project was written in 2018 by DonTseTse
+
+It is licensed under the Apache 2.0 license.
+
+See the file LICENSE for full legal details.
