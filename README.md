@@ -10,8 +10,8 @@ The command used to launch the DHCP server is
 
 `/usr/sbin/dhcpd -f -d -cf /etc/dhcp/dhcpd.conf -user dhcpd -group dhcpd --no-pid`
 
-which is what CentOS' default `systemd` unit file uses, except the `-d` flag added to reconfigure logging to 
-use stdout/stderr instead of SYSLOG. 
+which is what CentOS' default `systemd` unit file `/usr/lib/systemd/system/dhcpd.service` uses, except 
+the `-d` flag added to reconfigure logging to use stdout/stderr instead of SYSLOG. 
 
 The DHCP server needs access to the network interface informations to be able to interpret its configuration - 
 in fact, the DHCP configuration is network interface agnostic and it's up to the server to match the 
