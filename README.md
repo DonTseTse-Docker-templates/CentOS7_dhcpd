@@ -3,8 +3,8 @@ CentOS 7 based Docker image to run the ISC DHCP server
 # Introduction
 On CentOS the DHCP server (`dhcpd`) is a `systemd` service. In this image, the server process is executed 
 directly on container launch (Dockerfile `CMD`), without `systemd`. The image also includes 
-[dumb-init](#dumb-init) to address the problems that appear because CentOS (any `systemd` based OS, for the 
-matter) always expects and supposes that the 1st process is `systemd`.
+[dumb-init](#dumb-init) to address the problems that appear because CentOS (any init-system based OS, for 
+the matter) always expects and supposes that the 1st process is the init-system.
 
 # DHCP server
 The command used to launch the DHCP server is
@@ -19,21 +19,21 @@ in fact, the DHCP configuration is network interface agnostic and it's up to the
 configurations with the actual network situation. If the DHCP service is meant to serve networks of the Docker 
 host, it has to be given access to the host's network interfaces with the Docker run flag `--net host`
 
-The launch command tells the server to expect its configuration file to be located at `/etc/dhcp/dhcpd.conf`. 
-There are several ways to get the file there:
-- it can be baked directly into the image using a 
+The `-cf` flag tells the server to expect its configuration file to be located at `/etc/dhcp/dhcpd.conf`. The
+file could be added at build time using a 
   
   `ADD <dhcpd_conf_filepath_on_host> /etc/dhcp/dhcpd.conf` 
-  
-  instruction in the Dockerfile, where `dhcpd_conf_filepath_on_host` is the absolute filepath of the 
-  configuration file on the Docker host, or
-- it is mounted from the host at runtime using the Docker run flag 
+
+instruction in the Dockerfile, where `dhcpd_conf_filepath_on_host` is the absolute filepath of the 
+configuration file on the Docker host. It implies however that the image has to be rebuild every time the 
+configuration changes. This image hence rather expects that the configuration file is mounted from the host at 
+runtime using the Docker run flag 
   
   `-v <dhcpd_conf_filepath_on_host>:/etc/dhcp/dhcpd.conf:ro` 
 
-  The  `...:ro` flag tells Docker to mount it as read-only.   
+The  `...:ro` flag tells Docker to mount it as read-only.   
 
-Relevant links:
+Related documentation:
 - [DHCP manual](https://linux.die.net/man/8/dhcpd)
 - [Docker host networking](https://docs.docker.com/network/host/)
 
@@ -48,6 +48,7 @@ While it's absolutely possible to run the DHCP server directly using the command
 practice to add `dumb-init` for proper signal handling. The Dockerfile contains the instruction to install the 
 latest binary from GitHub and the Dockerfile `CMD` is prepended with `dumb-init`.
 
+Related documentation:
 - [dumb-init GitHub repository](https://github.com/Yelp/dumb-init)
 - [Blog article](https://engineeringblog.yelp.com/2016/01/dumb-init-an-init-for-docker.html) from the Yelp 
   engineers which explains why they created `dumb-init`
@@ -58,8 +59,10 @@ If the Docker host runs on a Linux OS using `systemd`, it makes sense to run the
 services (not to be confused with the `systemd` inside the container, which never runs). Tools like 
 [systemd-docker](https://github.com/DonTseTse/systemd-docker) allow to improve integration: it makes `systemd` 
 supervise the actual container process instead of the Docker client process. The integration into `systemd` also 
-shows the purpose of `dumb-init` - without it, the container would ignore termination signals, which leaves 
-`systemd` helpless when it tries to shutdown such a container. 
+shows the purpose of `dumb-init`: without it, the container ignores termination signals, which leaves `systemd` 
+helpless when it tries to shutdown such a container. 
+
+A `systemd` service unit file example is provided below in the [Execution section](#execution)
 
 # How-to
 ## Image build 
@@ -73,7 +76,7 @@ registry
 Supposing that you want to run the container on the host's network interfaces and with a DHCP configuration 
 mounted from the host, execute:
 
-`docker run --net host -v <dhcpd_conf_filepath>:/etc/dhcp/dhcpd.conf --name <container_name> -d <image_name>`
+`docker run --net host -v <dhcpd_conf_filepath>:/etc/dhcp/dhcpd.conf:ro --name <container_name> -d <image_name>`
 
 where
 - `container_name` should be specified to keep track of the container
@@ -82,7 +85,7 @@ where
 The role of the `--net` and `-v` flags is explained in the [DHCP server section](#dhcp-server) 
 
 To run that same container as a `systemd` unit and supposing that `systemd-docker` was copied to `/usr/bin`, 
-a service unit file might look like:
+a service unit file could look like:
 ```ini
 [Unit]
 Description=DHCP service
@@ -90,7 +93,7 @@ After=docker.service
 Requires=docker.service
  
 [Service]
-ExecStart=/usr/bin/systemd-docker run --net host -v <dhcpd_conf_filepath>:/etc/dhcp/dhcpd.conf --name <container_name> --rm <image_name>
+ExecStart=/usr/bin/systemd-docker run --net host -v <dhcpd_conf_filepath>:/etc/dhcp/dhcpd.conf:ro --name <container_name> --rm <image_name>
 Restart=always
 
 [Install]
