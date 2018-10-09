@@ -22,14 +22,14 @@ host, it has to be given access to the host's network interfaces with the Docker
 The `-cf` flag tells the server to expect its configuration file to be located at `/etc/dhcp/dhcpd.conf`. The
 file could be added at build time using a 
   
-  `ADD <dhcpd_conf_filepath_on_host> /etc/dhcp/dhcpd.conf` 
+`ADD <dhcpd_conf_filepath_on_host> /etc/dhcp/dhcpd.conf` 
 
 instruction in the Dockerfile, where `dhcpd_conf_filepath_on_host` is the absolute filepath of the 
-configuration file on the Docker host. It implies however that the image has to be rebuild every time the 
-configuration changes. This image hence rather expects that the configuration file is mounted from the host at 
-runtime using the Docker run flag 
+configuration file on the Docker host. However, that implies that the image has to be rebuild every time the 
+configuration changes. To avoid this, this image rather expects that the configuration file is mounted from 
+the host at runtime using the Docker run flag 
   
-  `-v <dhcpd_conf_filepath_on_host>:/etc/dhcp/dhcpd.conf:ro` 
+`-v <dhcpd_conf_filepath_on_host>:/etc/dhcp/dhcpd.conf:ro` 
 
 The  `...:ro` flag tells Docker to mount it as read-only.   
 
@@ -45,8 +45,10 @@ without `dumb-init` ignore shutdown signals. The Docker client "solves" this by 
 the stop command times out but other pieces of software tend to get confused if processes ignore common signals. 
 
 While it's absolutely possible to run the DHCP server directly using the command given above, it's just good
-practice to add `dumb-init` for proper signal handling. The Dockerfile contains the instruction to install the 
-latest binary from GitHub and the Dockerfile `CMD` is prepended with `dumb-init`.
+practice to add `dumb-init` for proper signal handling. The Dockerfile contains the instructions to install the 
+latest binary from GitHub and the launch instruction is prepended with `dumb-init` to become 
+
+`dumb-init /usr/sbin/dhcpd ...`
 
 Related documentation:
 - [dumb-init GitHub repository](https://github.com/Yelp/dumb-init)
@@ -76,10 +78,10 @@ registry
 Supposing that you want to run the container on the host's network interfaces and with a DHCP configuration 
 mounted from the host, execute:
 
-`docker run --net host -v <dhcpd_conf_filepath>:/etc/dhcp/dhcpd.conf:ro --name <container_name> -d <image_name>`
+`docker run --net host -v <dhcpd_conf_filepath>:/etc/dhcp/dhcpd.conf:ro --name <cnt_name> -d <image_name>`
 
 where
-- `container_name` should be specified to keep track of the container
+- `cnt_name` (container name) is the unique name within Docker, required to keep track of the container
 - `image_name` is the name choosen during the build step (to list available images run `docker images`)
 
 The role of the `--net` and `-v` flags is explained in the [DHCP server section](#dhcp-server) 
