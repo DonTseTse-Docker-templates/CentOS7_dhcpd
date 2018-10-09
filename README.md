@@ -41,6 +41,7 @@ Related documentation:
 - [DHCP manual](https://linux.die.net/man/8/dhcpd)
 - [Docker host networking](https://docs.docker.com/network/host/)
 - [Docker bind mounts](https://docs.docker.com/storage/bind-mounts/)
+- [Docker volumes](https://docs.docker.com/storage/volumes/)
 
 # dumb-init
 Since CentOS uses `systemd` and supposes that the process with ID 1 is always `systemd`, running a single process 
@@ -108,7 +109,7 @@ WantedBy=multi-user.target
 When `systemd-docker` is used, a explicit container name (`--name <container_name>`) as well as automatic
 removal (`--rm`) is compulsory and the `-d` flag is not needed. 
 
-# Acknowledgements
+# Credits
 
 This image uses the following software components:
 
@@ -116,10 +117,10 @@ This image uses the following software components:
 - ISC DHCP server from https://www.isc.org/downloads/dhcp/
 - Dumb-init from https://github.com/Yelp/dumb-init
 
+`systemd-docker` can be found [here](https://github.com/DonTseTse/systemd-docker)
+
 # Copyright & License
 
 This project was written in 2018 by DonTseTse
 
-It is licensed under the Apache 2.0 license.
-
-See the file LICENSE for full legal details.
+It is licensed under the [Apache 2.0 license](LICENSE)
