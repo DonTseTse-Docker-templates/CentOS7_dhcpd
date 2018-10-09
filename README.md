@@ -1,4 +1,4 @@
-CentOS 7 based Docker image to run the ISC DHCP server
+Dockerized ISC DHCP server based on CentOS 7 
 
 # Introduction
 On CentOS the DHCP server (`dhcpd`) is a `systemd` service. In this image, the server process is executed 
@@ -25,28 +25,35 @@ file could be added at build time using a
 `ADD <dhcpd_conf_filepath_on_host> /etc/dhcp/dhcpd.conf` 
 
 instruction in the Dockerfile, where `dhcpd_conf_filepath_on_host` is the absolute filepath of the 
-configuration file on the Docker host. However, that implies that the image has to be rebuild every time the 
-configuration changes. To avoid this, this image rather expects that the configuration file is mounted from 
-the host at runtime using the Docker run flag 
+configuration file on the Docker host. However, that would imply that the image has to be rebuild every time 
+the configuration changes. To avoid this, this image rather expects that the configuration file is mounted 
+from the host at runtime using the Docker run flag 
   
 `-v <dhcpd_conf_filepath_on_host>:/etc/dhcp/dhcpd.conf:ro` 
 
 The  `...:ro` flag tells Docker to mount it as read-only.   
 
+The DHCP server stores its leases in `/var/lib/dhcpd`. This folder should be made persistant to insure service
+continuation in case of DHCP server restarts (faulty or not). The easiest way is to use a Docker volume 
+
+`-v <volume_name>:/var/lib/dhcpd` 
+
 Related documentation:
 - [DHCP manual](https://linux.die.net/man/8/dhcpd)
 - [Docker host networking](https://docs.docker.com/network/host/)
+- [Docker bind mounts](https://docs.docker.com/storage/bind-mounts/)
 
 # dumb-init
 Since CentOS uses `systemd` and supposes that the process with ID 1 is always `systemd`, running a single process 
 inside a CentOS container comes with a range of quirks explained in the 
 [dumb-init documentation](https://github.com/Yelp/dumb-init). One important aspect is that affected containers 
-without `dumb-init` ignore shutdown signals. The Docker client "solves" this by killing the container process if 
-the stop command times out but other pieces of software tend to get confused if processes ignore common signals. 
+without `dumb-init` ignore process signals like `SIGTERM`. The Docker client "solves" this by killing the 
+container process if the stop command times out but other pieces of software tend to get confused if processes 
+ignore common signals. 
 
-While it's absolutely possible to run the DHCP server directly using the command given above, it's just good
-practice to add `dumb-init` for proper signal handling. The Dockerfile contains the instructions to install the 
-latest binary from GitHub and the launch instruction is prepended with `dumb-init` to become 
+Hence, while it's absolutely possible to run the DHCP server directly using the command given above, it's just 
+good practice to add `dumb-init` for proper signal handling. The Dockerfile contains the instructions to install 
+the latest binary from GitHub and the launch instruction is prepended with `dumb-init` to become 
 
 `dumb-init /usr/sbin/dhcpd ...`
 
@@ -75,10 +82,10 @@ In the folder where the Dockerfile is, execute:
 registry
 
 ## Execution
-Supposing that you want to run the container on the host's network interfaces and with a DHCP configuration 
-mounted from the host, execute:
+Supposing that you want to run the container on the host's network interfaces, execute:
 
-`docker run --net host -v <dhcpd_conf_filepath>:/etc/dhcp/dhcpd.conf:ro -d <image_name>`
+`docker run --net host -v <dhcpd_conf>:/etc/dhcp/dhcpd.conf:ro -v <volume_name>:/var/lib/dhcp -d <image_name>`
+
 where
 - `image_name` is the name choosen during the build step (to list available images run `docker images`)
 - the role of the `--net` and `-v` flags is explained in the [DHCP server section](#dhcp-server) 
