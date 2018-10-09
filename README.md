@@ -67,9 +67,9 @@ Related documentation:
 If the Docker host runs on a Linux OS using `systemd`, it makes sense to run the Docker containers as `systemd`  
 services (not to be confused with the `systemd` inside the container, which never runs). Tools like 
 [systemd-docker](https://github.com/DonTseTse/systemd-docker) allow to improve integration: it makes `systemd` 
-supervise the actual container process instead of the Docker client process. The integration into `systemd` also 
-shows the purpose of `dumb-init`: without it, the container ignores termination signals, which leaves `systemd` 
-helpless when it tries to shutdown such a container. 
+supervise the actual container process instead of the Docker client process. The integration into `systemd` is 
+only possible in combination with `dumb-init`: without it, `systemd` would be unable to shutdown/restart
+services. 
 
 A `systemd` service unit file example is provided below in the [Execution section](#execution)
 
