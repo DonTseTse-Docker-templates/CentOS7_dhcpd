@@ -52,7 +52,7 @@ but other pieces of software tend to get confused if processes misbehave.
 
 Hence, while it's absolutely possible to run the DHCP server directly using the command given above, it's just 
 good practice to add `dumb-init` for proper signal handling. The Dockerfile contains the instructions to install 
-the latest binary from GitHub and the launch instruction is prepended with `dumb-init` to become 
+the latest binary from GitHub and the Dockerfile `CMD` is prepended with `dumb-init` to become 
 
 `dumb-init /usr/sbin/dhcpd ...`
 
@@ -99,7 +99,7 @@ After=docker.service
 Requires=docker.service
  
 [Service]
-ExecStart=/usr/bin/systemd-docker run --net host -v <dhcpd_conf_filepath>:/etc/dhcp/dhcpd.conf:ro --name <container_name> --rm <image_name>
+ExecStart=/usr/bin/systemd-docker run --net host -v <dhcpd_conf_filepath>:/etc/dhcp/dhcpd.conf:ro -v <volume_name>:/var/lib/dhcp --name <container_name> --rm <image_name>
 Restart=always
 
 [Install]
