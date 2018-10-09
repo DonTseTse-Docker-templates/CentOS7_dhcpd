@@ -2,9 +2,9 @@ CentOS 7 based Docker image to run the ISC DHCP server
 
 # Introduction
 On CentOS the DHCP server (`dhcpd`) is a `systemd` service. In this image, the server process is executed 
-directly on container launch (Dockerfile `CMD`), without `systemd`. The image also includes 
-[dumb-init](#dumb-init) to address the problems that appear because CentOS (any init-system based OS, for 
-the matter) always expects and supposes that the 1st process is the init-system.
+directly on container launch (Dockerfile `CMD`), without `systemd`. The image uses [dumb-init](#dumb-init) 
+to address the problems that appear because CentOS (any init-system based Linux, for the matter) always 
+expects and supposes that the 1st process is the init-system.
 
 # DHCP server
 The command used to launch the DHCP server is
@@ -78,15 +78,13 @@ registry
 Supposing that you want to run the container on the host's network interfaces and with a DHCP configuration 
 mounted from the host, execute:
 
-`docker run --net host -v <dhcpd_conf_filepath>:/etc/dhcp/dhcpd.conf:ro --name <cnt_name> -d <image_name>`
-
+`docker run --net host -v <dhcpd_conf_filepath>:/etc/dhcp/dhcpd.conf:ro -d <image_name>`
 where
-- `cnt_name` (container name) is the unique name within Docker, required to keep track of the container
 - `image_name` is the name choosen during the build step (to list available images run `docker images`)
+- the role of the `--net` and `-v` flags is explained in the [DHCP server section](#dhcp-server) 
+- `-d` detaches the console to daemonize the process
 
-The role of the `--net` and `-v` flags is explained in the [DHCP server section](#dhcp-server) 
-
-To run that same container as a `systemd` unit and supposing that `systemd-docker` was copied to `/usr/bin`, 
+To run that same container as a `systemd` unit using `systemd-docker` (supposed to be in `/usr/bin`), 
 a service unit file could look like:
 ```ini
 [Unit]
@@ -101,3 +99,5 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 ```
+When `systemd-docker` is used, a explicit container name (`--name <container_name>`) as well as automatic
+removal (`--rm`) is compulsory and the `-d` flag is not needed. 
