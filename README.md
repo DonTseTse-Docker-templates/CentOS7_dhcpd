@@ -25,13 +25,13 @@ There are several ways to get the file there:
   
   `ADD <dhcpd_conf_filepath_on_host> /etc/dhcp/dhcpd.conf` 
   
-  instruction in the Dockerfile, or
+  instruction in the Dockerfile, where `dhcpd_conf_filepath_on_host` is the absolute filepath of the 
+  configuration file on the Docker host, or
 - it is mounted from the host at runtime using the Docker run flag 
   
   `-v <dhcpd_conf_filepath_on_host>:/etc/dhcp/dhcpd.conf:ro` 
 
-  where `dhcpd_conf_filepath_on_host` is the absolute filepath of the configuration file on the Docker host. The
-  `:ro` at the end mounts it read-only.   
+  The  `...:ro` flag tells Docker to mount it as read-only.   
 
 Relevant links:
 - [DHCP manual](https://linux.die.net/man/8/dhcpd)
@@ -54,13 +54,12 @@ latest binary from GitHub and the Dockerfile `CMD` is prepended with `dumb-init`
 - [StackOverflow question whether dumb-init is really needed](https://stackoverflow.com/questions/37374310/how-critical-is-dumb-init-for-docker)
 
 # systemd integration on the Docker host: systemd-docker & dumb-init
-If the Docker host runs on a Linux OS using `systemd`, it makes sense to run the Docker containers as systemd 
+If the Docker host runs on a Linux OS using `systemd`, it makes sense to run the Docker containers as `systemd`  
 services (not to be confused with the `systemd` inside the container, which never runs). Tools like 
 [systemd-docker](https://github.com/DonTseTse/systemd-docker) allow to improve integration: it makes `systemd` 
-supervise the actual container process instead of the client process. When issuing a `systemctl stop` or 
-`systemctl restart`, `systemd` sends a termination signal (`SIGTERM`) to the process, which, if the container 
-would not use `dumb-init`, would be ignored and leave `systemd` puzzled. With `dumb-init`, both 
-`systemd-docker` and the container shut down properly. 
+supervise the actual container process instead of the Docker client process. The integration into `systemd` also 
+shows the purpose of `dumb-init` - without it, the container would ignore termination signals, which leaves 
+`systemd` helpless when it tries to shutdown such a container. 
 
 # How-to
 ## Image build 
